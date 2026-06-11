@@ -1,0 +1,24 @@
+{
+  "_comment": "PayPal SLA resolution timeframes by CFPB issue category. Source: PayPal Resolution Center (verified May 2026). Update this file if PayPal revises their SLA policies.",
+  "sla_rules": [
+    {
+      "issue_keywords": ["unauthorized transactions", "fraud or scam"],
+      "sla_days": 14,
+      "label": "Fraud / Unauthorized Transaction",
+      "source": "https://www.paypal.com/us/cshelp/article/how-long-does-it-take-to-resolve-a-dispute-or-claim-help257"
+    },
+    {
+      "issue_keywords": ["managing, opening, or closing account", "money was not available", "wrong amount", "problem with a purchase", "unexpected or other fees"],
+      "sla_days": 20,
+      "label": "Account / Transfer / Billing Issues",
+      "source": "https://www.paypal.com/us/cshelp/article/dispute-filing-timeframes-help1173"
+    },
+    {
+      "issue_keywords": ["problem with customer service", "other transaction problem", "confusing or misleading"],
+      "sla_days": 30,
+      "label": "Customer Service / General",
+      "source": "https://www.paypal.com/us/webapps/mpp/ua/useragreement-full"
+    }
+  ],
+  "default_sla_days": 30
+}

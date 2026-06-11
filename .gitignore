@@ -1,0 +1,43 @@
+# Secrets
+.env
+
+# LLM cache
+.cache/
+
+# Data files (too large for git)
+data/raw/*.csv
+data/processed/train.csv
+data/processed/error_log_*.csv
+data/processed/eval_results_*.csv
+data/processed/*.json
+data/processed/fewshot_examples.csv
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# OS
+.DS_Store
+Thumbs.db
+current_work.txt
+
+# src files 
+src/complaint_parser_taxonomy_min_samples.py
+src/complaint_parser_taxonomy_min_samples_incorrect_label_check.py
+src/complaint_parser_taxonomy_min_samples_incorrect_label_check_edit1.py
+src/complaint_parser_taxonomy_min_samples_incorrect_label_check_edit2.py
+src/complaint_parser_taxonomy_min_samples_incorrect_label_check_edit3.py
+src/complaint_parser_oldest.py
+src/complaint_parser_with_taxonomy_check.py
+current_work.txt
+src/complaint_parser_taxonomy_min_samples_incorrect_label_check_edit4.py
+
+# prompt files
+prompts/system_prompt_taxonomy_min_samples_incorrect_label_check_edit1.py
+prompts/system_prompt_with_classification_taxonomy.py
+prompts/system_prompt_old.py
+prompts/fewshot_block_old.txt
+prompts/fewshot_block.txt
+
