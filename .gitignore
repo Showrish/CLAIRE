@@ -1,5 +1,6 @@
 # Secrets
 .env
+.streamlit
 
 # LLM cache
 .cache/
@@ -41,3 +42,12 @@ prompts/system_prompt_old.py
 prompts/fewshot_block_old.txt
 prompts/fewshot_block.txt
 
+.env
+.streamlit/secrets.toml
+API.txt
+.cache/
+__pycache__/
+*.pyc
+data/raw/
+data/processed/*.csv
+!data/processed/test.csv
