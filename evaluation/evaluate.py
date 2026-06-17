@@ -126,6 +126,7 @@ def run_evaluation(
     df: pd.DataFrame,
     limit: int = 30,
     min_per_category: int = 0,
+    max_rows: int = 300,
     progress_callback: Optional[Callable[[int, int, str], None]] = None,
 ) -> dict:
     """Evaluate the v4a pipeline on a labelled CFPB dataframe.
@@ -134,6 +135,9 @@ def run_evaluation(
         df: raw uploaded dataframe (columns will be normalised here).
         limit: total rows to evaluate.
         min_per_category: guarantee >= this many rows per Issue category.
+        max_rows: hard safety ceiling on rows actually evaluated, to bound time and
+            API cost. The effective sample is min(limit, max_rows). Raise this
+            deliberately for a large authorised run.
         progress_callback: optional fn(done, total, complaint_id) for UI progress.
 
     Returns a dict:
@@ -154,6 +158,12 @@ def run_evaluation(
     narrative_col = info["narrative_col"]
     issue_col = info["issue_col"]
     score_product = info["product_col"] is not None
+
+    # Hard safety cap — protects every caller (CLI, Streamlit, notebook) from an
+    # accidental thousand-row paid run. Effective sample never exceeds max_rows.
+    requested_limit = limit
+    limit = min(limit, max_rows)
+    capped = requested_limit > limit
 
     # Keep only rows that actually have a narrative
     df = df[df[narrative_col].notna() & (df[narrative_col].astype(str).str.strip() != "")]
@@ -300,6 +310,10 @@ def run_evaluation(
         "small_sample_warning": total < 40,
         "score_product": score_product,
         "id_synthesised": info["id_col"] is None,
+        "capped": capped,
+        "requested_limit": requested_limit,
+        "effective_limit": limit,
+        "max_rows": max_rows,
     }
 
     return {
@@ -324,14 +338,22 @@ if __name__ == "__main__":
     p.add_argument("--limit", type=int, default=30, help="Total rows to evaluate")
     p.add_argument("--min-per-category", type=int, default=0, dest="min_per_category",
                    help="Minimum rows per issue category (0 = random sample)")
+    p.add_argument("--max-rows", type=int, default=300, dest="max_rows",
+                   help="Hard safety ceiling on rows evaluated (default: 300). "
+                        "Effective sample = min(--limit, --max-rows).")
     args = p.parse_args()
 
     if not os.environ.get("OPENAI_API_KEY"):
         print("ERROR: OPENAI_API_KEY not set (add it to .env).")
         raise SystemExit(1)
 
+    if args.limit > args.max_rows:
+        print(f"NOTE: --limit {args.limit} exceeds the safety cap; evaluating "
+              f"{args.max_rows} rows. Pass --max-rows to raise the ceiling deliberately.")
+
     frame = pd.read_csv(args.input, dtype=str, low_memory=False)
     out = run_evaluation(frame, limit=args.limit, min_per_category=args.min_per_category,
+                         max_rows=args.max_rows,
                          progress_callback=lambda d, t, cid: print(f"  [{d}/{t}] {cid}"))
     s = out["summary"]
     print("\n" + "=" * 60)
