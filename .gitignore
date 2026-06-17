@@ -34,6 +34,7 @@ src/complaint_parser_oldest.py
 src/complaint_parser_with_taxonomy_check.py
 current_work.txt
 src/complaint_parser_taxonomy_min_samples_incorrect_label_check_edit4.py
+src/respond_old.py
 
 # prompt files
 prompts/system_prompt_taxonomy_min_samples_incorrect_label_check_edit1.py
@@ -50,4 +51,9 @@ __pycache__/
 *.pyc
 data/raw/
 data/processed/*.csv
-!data/processed/test.csv
+data/processed/test.csv
+app_old.py
+response_MANUAL-001.txt
+
+# evaluation files
+evaluation/evaluate_old.py
