@@ -262,6 +262,14 @@ with tab_eval:
             help="Free tier (3 RPM) ≈ 20s; paid tier 0–1s.")
         est = min(int(limit), n_rows); per = float(throttle) + 1.5
         st.caption(f"≈ {est} rows × ~{per:.1f}s ≈ **{est*per/60:.1f} min** cold; cached rows are instant.")
+
+        # Identify the current upload so stored results can be tied to it (and
+        # cleared automatically when a different file is uploaded).
+        file_key = f"{uploaded.name}:{getattr(uploaded, 'size', len(raw_df))}"
+
+        # ── Run: compute results and STASH them in session_state. We deliberately
+        #    do NOT render here. Rendering happens below, on every rerun, so a
+        #    download-button click (which reruns the script) can't wipe the results.
         if st.button("▶ Run Evaluation", type="primary", use_container_width=True):
             SETTINGS["SLEEP_BETWEEN_CALLS"] = float(throttle)
             SETTINGS["SLEEP_RESPONSE_GEN"] = float(throttle)
@@ -273,34 +281,53 @@ with tab_eval:
                 st.error(f"Evaluation failed: {exc}"); st.stop()
             finally:
                 prog.empty()
-            sm = out["summary"]
+            # Persist across reruns. Pre-serialise the CSVs so the download
+            # buttons never need the live `out` object again.
+            _rb = io.StringIO(); out["eval_results"].to_csv(_rb, index=False)
+            _eb = io.StringIO(); out["error_rows"].to_csv(_eb, index=False)
+            st.session_state["eval_result"] = {
+                "file_key": file_key,
+                "summary": out["summary"],
+                "per_issue": out["per_issue"],
+                "meta": out["meta"],
+                "error_rows": out["error_rows"],
+                "results_csv": _rb.getvalue(),
+                "error_csv": _eb.getvalue(),
+                "n_errors": len(out["error_rows"]),
+            }
+
+        # ── Render the results from session_state (survives download-button reruns).
+        #    Only shown if they belong to the file currently uploaded; uploading a
+        #    different file leaves them hidden until the next run.
+        res = st.session_state.get("eval_result")
+        if res and res["file_key"] == file_key:
+            sm = res["summary"]
             st.markdown("#### Results")
             m1, m2, m3 = st.columns(3)
             if sm["scored_product"]:
-                st.session_state["_p"] = "pass" if sm["product_threshold_met"] else "fail"
+                _pc = "pass" if sm["product_threshold_met"] else "fail"
                 m1.markdown(card("Product accuracy",
-                    f"{sm['product_accuracy']*100:.0f}%  <span class='badge badge-{st.session_state['_p']}'>{'PASS' if sm['product_threshold_met'] else 'BELOW'}</span>", raw=True), unsafe_allow_html=True)
+                    f"{sm['product_accuracy']*100:.0f}%  <span class='badge badge-{_pc}'>{'PASS' if sm['product_threshold_met'] else 'BELOW'}</span>", raw=True), unsafe_allow_html=True)
             else:
                 m1.markdown(card("Product accuracy", "n/a — no product column"), unsafe_allow_html=True)
             ip = "pass" if sm["issue_threshold_met"] else "fail"
             m2.markdown(card("Issue accuracy",
                 f"{sm['issue_accuracy']*100:.0f}%  <span class='badge badge-{ip}'>{'PASS' if sm['issue_threshold_met'] else 'BELOW'}</span>", raw=True), unsafe_allow_html=True)
             m3.markdown(card("Rows evaluated", f"{sm['evaluated']} (failed: {sm['failed']})"), unsafe_allow_html=True)
-            if out["meta"]["small_sample_warning"]:
+            if res["meta"]["small_sample_warning"]:
                 st.warning("Fewer than 40 rows evaluated — raise the cap / min-per-category for a reliable number.", icon="⚠️")
             import pandas as pd
             pi_df = pd.DataFrame([{"Issue": r["issue"], "Correct": r["correct"], "Total": r["total"],
-                                   "Accuracy": f"{r['accuracy']*100:.0f}%"} for r in out["per_issue"]])
+                                   "Accuracy": f"{r['accuracy']*100:.0f}%"} for r in res["per_issue"]])
             st.markdown("##### Per-issue breakdown")
             st.dataframe(pi_df, use_container_width=True, hide_index=True)
             d1, d2 = st.columns(2)
-            rb = io.StringIO(); out["eval_results"].to_csv(rb, index=False)
-            d1.download_button("⬇ eval_results.csv", rb.getvalue(), "eval_results.csv", "text/csv", use_container_width=True)
-            err = out["error_rows"]
-            if not err.empty:
-                eb = io.StringIO(); err.to_csv(eb, index=False)
-                d2.download_button(f"⬇ error_log.csv ({len(err)})", eb.getvalue(), "error_log.csv", "text/csv", use_container_width=True)
-                with st.expander(f"Misclassified & near-equivalent rows ({len(err)})"):
-                    st.dataframe(err, use_container_width=True, hide_index=True)
+            d1.download_button("⬇ eval_results.csv", res["results_csv"], "eval_results.csv", "text/csv",
+                               use_container_width=True, key="dl_eval_results")
+            if res["n_errors"] > 0:
+                d2.download_button(f"⬇ error_log.csv ({res['n_errors']})", res["error_csv"], "error_log.csv",
+                                   "text/csv", use_container_width=True, key="dl_error_log")
+                with st.expander(f"Misclassified & near-equivalent rows ({res['n_errors']})"):
+                    st.dataframe(res["error_rows"], use_container_width=True, hide_index=True)
             else:
                 d2.success("No misclassifications.")

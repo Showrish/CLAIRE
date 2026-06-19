@@ -258,8 +258,12 @@ def _call_openai(narrative: str) -> dict:
             {"role": "user", "content": f"NARRATIVE: {narrative[:SETTINGS['NARRATIVE_MAX_CHARS']]}"},
         ],
         temperature=SETTINGS["TEMPERATURE"],
+        seed=SETTINGS["SEED"],          # best-effort determinism on cache misses (pairs with temperature=0)
         max_tokens=700,  # v3: extra tokens for reasoning field
     )
+    # system_fingerprint changes if OpenAI alters the backend under a pinned
+    # snapshot — log it so a cold-run drift has a visible cause.
+    log.debug("system_fingerprint: %s", getattr(response, "system_fingerprint", None))
     return json.loads(response.choices[0].message.content)
 
 

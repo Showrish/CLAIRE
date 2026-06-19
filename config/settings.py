@@ -33,8 +33,9 @@ def _build_sla_lookup(rules: list, default: int) -> dict:
 
 SETTINGS = {
     # ── Model ────────────────────────────────────────────────────────────────
-    "MODEL_NAME":               "gpt-4o-mini",
+    "MODEL_NAME":               "gpt-4o-mini-2024-07-18",  # pinned snapshot (alias 'gpt-4o-mini' resolves here) — stops silent model drift
     "TEMPERATURE":              0,
+    "SEED":                     42,    # best-effort determinism on cache misses (used with temperature=0)
     "MAX_TOKENS":               600,
     "MAX_RETRIES":              0,
 
