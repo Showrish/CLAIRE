@@ -247,8 +247,10 @@ with tab_eval:
         c1, c2, c3 = st.columns(3)
         c1.success(f"Narrative: `{info['narrative_col']}`")
         c2.success("Issue accuracy: available")
-        (c3.success("Product accuracy: available") if info["product_col"]
-         else c3.warning("Product accuracy: no `product` column — issue-only"))
+        if info["product_col"]:
+            c3.success("Product accuracy: available")
+        else:
+            c3.warning("Product accuracy: no `product` column — issue-only")
         with st.expander("Preview (first 5 rows)"):
             st.dataframe(raw_df.head(5), use_container_width=True)
         n_rows = len(norm_df); n_cats = norm_df[info["issue_col"]].nunique()
