@@ -109,7 +109,7 @@ if not os.environ.get("OPENAI_API_KEY", "").strip():
         st.stop()
 
 st.divider()
-tab_chat, tab_triage, tab_eval = st.tabs(["💬 Assistant", "🔍 Analysis (customer service staff)", "📊 Evaluate (development team)"])
+tab_chat, tab_analysis, tab_eval = st.tabs(["💬 Assistant", "🔍 Analysis (customer service staff)", "📊 Evaluate (development team)"])
 
 
 # ════════════════════════════════════════════════════════════ TAB 1 — ASSISTANT (chat)
@@ -175,7 +175,7 @@ with tab_chat:
 
 
 # ════════════════════════════════════════════════════════════ TAB 2 — TRIAGE (staff)
-with tab_triage:
+with tab_analysis:
     st.caption("Internal analyst view — full classification, SLA, and the drafted consumer message.")
     in_col, out_col = st.columns([1, 1], gap="large")
     with in_col:
@@ -255,8 +255,12 @@ with tab_eval:
             st.dataframe(raw_df.head(5), use_container_width=True)
         n_rows = len(norm_df); n_cats = norm_df[info["issue_col"]].nunique()
         st.markdown(f"**{n_rows:,}** rows · **{n_cats}** issue categories")
-        s1, s2, s3 = st.columns(3)
-        min_per_cat = s1.number_input("Min rows per category", 0, 50, 10)
+        # Sampling strategy is fixed to a plain random sample (min-per-category = 0),
+        # the canonical evaluation setting. The balanced-sample option remains
+        # available via the CLI / run_evaluation() for methodology testing, but is
+        # intentionally not exposed in this results-facing UI.
+        min_per_cat = 0
+        s2, s3 = st.columns(2)
         limit = s2.number_input("Row cap (total)", 5, 300, 50)
         throttle = s3.number_input("Per-call delay (sec)", 0.0, 30.0, 1.0, 0.5,
             help="Free tier (3 RPM) ≈ 20s; paid tier 0–1s.")
