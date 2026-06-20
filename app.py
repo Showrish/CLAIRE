@@ -109,7 +109,7 @@ if not os.environ.get("OPENAI_API_KEY", "").strip():
         st.stop()
 
 st.divider()
-tab_chat, tab_triage, tab_eval = st.tabs(["💬 Assistant", "🔍 Triage (staff)", "📊 Evaluate"])
+tab_chat, tab_triage, tab_eval = st.tabs(["💬 Assistant", "🔍 Analysis (customer service staff)", "📊 Evaluate (development team)"])
 
 
 # ════════════════════════════════════════════════════════════ TAB 1 — ASSISTANT (chat)
