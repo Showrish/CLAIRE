@@ -5,6 +5,10 @@ An LLM-powered consumer complaint triage agent built on the CFPB Consumer Compla
 
 > Developed as part of the Group 2 XN Project, ALY6080 Integrated Experiential Learning, Northeastern University (June 2026).
 
+<p align="center">
+  <img src="docs/claire-demo.gif" alt="CLAIRE demo: triaging a consumer complaint in the Streamlit app" width="800">
+</p>
+
 ---
 
 ## What it does
