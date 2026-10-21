@@ -269,14 +269,14 @@ def _call_openai(narrative: str) -> dict:
 
 def extract_llm_fields(record: ComplaintRecord) -> ComplaintRecord:
     """Run LLM extraction with caching; populate LLM fields in-place."""
-    cached = _load_from_cache(record.complaint_id)
+    cached = _load_from_cache(f"{record.complaint_id}:{record.raw_narrative}")
     if cached:
         log.debug("Cache hit for complaint %s", record.complaint_id)
         llm_data = cached
     else:
         try:
             llm_data = _call_openai(record.raw_narrative)
-            _save_to_cache(record.complaint_id, llm_data)
+            _save_to_cache(f"{record.complaint_id}:{record.raw_narrative}", llm_data)
         except Exception as exc:
             log.warning("LLM extraction failed for %s: %s", record.complaint_id, exc)
             llm_data = {}
