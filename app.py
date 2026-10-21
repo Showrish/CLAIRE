@@ -22,6 +22,11 @@ from pathlib import Path
 
 import streamlit as st
 
+
+def esc(text):
+    """Escape text for HTML and neutralise $ so Streamlit doesn't render it as math."""
+    return html.escape(str(text)).replace("$", "&#36;")
+
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
@@ -88,8 +93,8 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 def card(label, value, raw=False):
-    v = value if raw else html.escape(str(value))
-    return f'<div class="claire-card"><div class="card-label">{html.escape(label)}</div><div class="card-value">{v}</div></div>'
+    v = value if raw else esc(str(value))
+    return f'<div class="claire-card"><div class="card-label">{esc(label)}</div><div class="card-value">{v}</div></div>'
 
 def badge(level):
     return f'<span class="badge badge-{level.lower()}">{level.upper()}</span>'
@@ -122,7 +127,7 @@ with tab_chat:
     # render history
     for m in st.session_state.chat:
         with st.chat_message(m["role"], avatar="⚖️" if m["role"] == "assistant" else "🧑"):
-            st.markdown(f'<div class="msg-sent">{html.escape(m["text"])}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="msg-sent">{esc(m["text"])}</div>', unsafe_allow_html=True)
             if m.get("chip"):
                 st.markdown(m["chip"], unsafe_allow_html=True)
             if m.get("analysis"):
@@ -140,7 +145,7 @@ with tab_chat:
     if prompt:
         st.session_state.chat.append({"role": "user", "text": prompt})
         with st.chat_message("user", avatar="🧑"):
-            st.markdown(html.escape(prompt))
+            st.markdown(esc(prompt))
         with st.chat_message("assistant", avatar="⚖️"):
             with st.spinner("CLAIRE is reading your message…"):
                 try:
@@ -148,9 +153,9 @@ with tab_chat:
                     result = analyse_and_respond(prompt.strip(), complaint_id=cid)
                     a = result["analysis"]
                     reply = result["automated_response"]
-                    chip = (f'<span class="chip">Logged: {html.escape((a["cfpb_issues"][0] if a["cfpb_issues"] else "your complaint"))}</span>'
+                    chip = (f'<span class="chip">Logged: {esc((a["cfpb_issues"][0] if a["cfpb_issues"] else "your complaint"))}</span>'
                             f'<span class="chip">Update within {a["sla_days"]} days</span>')
-                    st.markdown(f'<div class="msg-sent">{html.escape(reply)}</div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="msg-sent">{esc(reply)}</div>', unsafe_allow_html=True)
                     st.markdown(chip, unsafe_allow_html=True)
                     with st.expander("Triage details (staff only)"):
                         st.markdown(
@@ -201,7 +206,7 @@ with tab_analysis:
             st.markdown(card("Issue identified", issue), unsafe_allow_html=True)
             st.markdown(card("Expected resolution timeline", f"{a['sla_days']} days"), unsafe_allow_html=True)
             st.markdown('<div class="claire-card"><div class="card-label">Message to consumer</div>'
-                        f'<div class="msg-sent">{html.escape(result["automated_response"])}</div></div>',
+                        f'<div class="msg-sent">{esc(result["automated_response"])}</div></div>',
                         unsafe_allow_html=True)
 
             with st.expander("Full triage analysis"):
